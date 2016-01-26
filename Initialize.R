@@ -1,0 +1,190 @@
+# Set Seed
+set.seed(1)
+
+# Disable Scientific Notation
+options(scipen = 999)
+
+#########################################################################################################
+# Load Libraries and Custom Functions #
+#######################################
+
+library(openxlsx)
+library(dplyr)
+library(ChainLadder)
+library(ggplot2)
+library(reshape)
+library(gbm)
+library(randomForest)
+library(AUC)
+library(xgboost)
+library(Ckmeans.1d.dp)
+library(data.table)
+library(dplyr)
+
+########################################################################################################################################
+########################################################################################################################################
+
+dbDisconnectAll <- function(){
+  ile <- length(dbListConnections(MySQL())  )
+  lapply( dbListConnections(MySQL()), function(x) dbDisconnect(x) )
+  cat(sprintf("%s connection(s) closed.\n", ile))
+}
+
+########################################################################################################################################
+########################################################################################################################################
+
+DateConv <- function(Cont){
+  
+  #############################################################################################
+  
+  Cont <- as.character(Cont)
+  Cont <- gsub(" ", "", Cont)
+  Cont <- gsub("/", "-", Cont)
+  Cont <- gsub("\\", "-", Cont, fixed = TRUE)
+  Cont <- gsub(".", "-", Cont, fixed = TRUE)
+  
+  #############################################################################################
+  
+  countr <- length(Cont)
+  
+  ContDf <- data.frame(Content = character(countr), 
+                       Six_Char = character(countr), 
+                       Leftyear = character(countr), 
+                       RightYear = character(countr), 
+                       YearFromNum = character(countr),
+                       Out = as.Date(countr, origin = "1899-12-30"),
+                       stringsAsFactors=FALSE)
+  ContDf$Content <- Cont 
+  ContDf$Content[ContDf$Content == ""] <- NA
+  ContDf$Out[is.na(ContDf$Content)] <- NA
+  
+  #############################################################################################
+  
+  ContDf$Six_Char[nchar(ContDf$Content) == 6] <- ContDf$Content[nchar(ContDf$Content) == 6]
+  
+  year <- strtrim(ContDf$Six_Char,2)
+  cent <- ifelse(as.numeric(year) < as.numeric(substr(format(Sys.Date(), "%Y"),3,4)),as.numeric(substr(format(Sys.Date(), "%Y"),1,2)),as.numeric(substr(format(Sys.Date(), "%Y"),1,2))-1)
+  cent[is.na(cent)] <- ""
+  month <- substr(ContDf$Six_Char,3,4)
+  day <- substr(ContDf$Six_Char,5,6)
+  Result6 <- paste(cent, year, "-", month, "-", day, sep = "")
+  Result6[Result6 == "--"] <- NA
+  ContDf$Six_Char <- Result6
+  ContDf$Content[!is.na(Result6)] <- NA
+  ContDf$Out[!is.na(ContDf$Six_Char)] <- ContDf$Six_Char[!is.na(ContDf$Six_Char)]
+  
+  #############################################################################################
+  
+  ContDf$YearFromNum[!is.na(as.numeric(ContDf$Content))] <- ContDf$Content[!is.na(as.numeric(ContDf$Content))]
+  ContDf$YearFromNum <- as.Date(as.numeric(ContDf$YearFromNum), origin = "1899-12-30")
+  ContDf$Content[!is.na(ContDf$YearFromNum)] <- NA
+  ContDf$Out[!is.na(ContDf$YearFromNum)] <- ContDf$YearFromNum[!is.na(ContDf$YearFromNum)]
+  
+  #############################################################################################
+  
+  ContDf$Leftyear[!is.na(as.numeric(substr(ContDf$Content,1,4)))] <- ContDf$Content[!is.na(as.numeric(substr(ContDf$Content,1,4)))]
+  LYDat <- ContDf$Leftyear
+  
+  leftprt <- as.numeric(substr(LYDat, 6, 7))
+  rightprt <- as.numeric(substr(LYDat, 9, 10))
+  
+  leftprt_ch <- ifelse(leftprt > 12, 1, 0)
+  leftprt_ch[is.na(leftprt_ch)] <- FALSE
+  
+  LYDat[leftprt_ch == 1] <- paste(substr(LYDat, 1, 4), "-", 
+                                  substr(LYDat, 9, 10), "-", 
+                                  substr(LYDat, 6, 7), sep = "")[leftprt_ch == 1]
+  
+  LYDat[LYDat == ""] <- NA
+  
+  ContDf$Leftyear <- LYDat
+  
+  ContDf$Content[!is.na(ContDf$Leftyear)] <- NA
+  ContDf$Out[!is.na(ContDf$Leftyear)] <- ContDf$Leftyear[!is.na(ContDf$Leftyear)]
+  
+  
+  #############################################################################################
+  
+  ContDf$RightYear[!is.na(ContDf$Content)] <- ContDf$Content[!is.na(ContDf$Content)]
+  RYDat <- ContDf$RightYear
+  
+  leftprt <- as.numeric(substr(RYDat, 1, 2))
+  rightprt <- as.numeric(substr(RYDat, 4, 5))
+  
+  leftprt_ch <- ifelse(leftprt > 12, 2, 1)
+  leftprt_ch[is.na(leftprt_ch)] <- 0
+  
+  RYDat[leftprt_ch == 2] <- paste(substr(RYDat, 7, 10), "-", 
+                                  substr(RYDat, 4, 5), "-", 
+                                  substr(RYDat, 1, 2), sep = "")[leftprt_ch == 2]
+  
+  RYDat[leftprt_ch == 1] <- paste(substr(RYDat, 7, 10), "-", 
+                                  substr(RYDat, 1, 2), "-", 
+                                  substr(RYDat, 4, 5), sep = "")[leftprt_ch == 1]
+  RYDat[RYDat == ""] <- NA
+  ContDf$RightYear <- RYDat
+  
+  ContDf$Content[!is.na(ContDf$RightYear)] <- NA
+  ContDf$Out[!is.na(ContDf$RightYear)] <- ContDf$RightYear[!is.na(ContDf$RightYear)]
+  
+  return(ContDf$Out)
+  
+}
+
+########################################################################################################################################
+########################################################################################################################################
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
