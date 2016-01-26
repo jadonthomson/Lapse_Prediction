@@ -14,7 +14,7 @@ source(paste(Path, "/Initialize.R", sep = ""))
 #############
 
 # Load Correct Claims File Here
-Dat <- read.xlsx(paste(Path,"/Lapse_Data.xlsx", sep = ""), 
+Dat <- read.xlsx(paste(Path,"/Data/Lapse_Data.xlsx", sep = ""), 
                  sheet = "Lapse_Data", 
                  detectDates = TRUE, 
                  colNames = TRUE)
@@ -27,19 +27,19 @@ Increase <- as.numeric(Increase)
 
 Dat$Increase <- Increase
 
-colnames(Dat)[which(colnames(Dat) %in% "Smoker/Non-Smoker")] <- "Smoker_Non-Smoker"
-colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.Commencement_x000D_.date")] <- "Comm_Dt"
-colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.Voice_x000D_.logged_x000D_.date")] <- "Voice_Dt"
-colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.status_x000D_.effective_x000D_.end.date")] <- "End_Dt"
-colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.Status")] <- "Stat"
-colnames(Dat)[which(colnames(Dat) %in% "Active.quoted.Premium")] <- "Act_Prem"
-colnames(Dat)[which(colnames(Dat) %in% "Total.Amount.paid.since.inception.to.current.month")] <- "Tot_Pd"
-colnames(Dat)[which(colnames(Dat) %in% "Credit.Protection.-.Death.sum.assured")] <- "Death_Sum"
-colnames(Dat)[which(colnames(Dat) %in% "Credit.Protection.-.Disability.sum.assured")] <- "Disb_Sum"
+colnames(Dat)[which(colnames(Dat) %in% "Smoker/Non-Smoker")]                                        <- "Smoker_Non-Smoker"
+colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.Commencement_x000D_.date")]                 <- "Comm_Dt"
+colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.Voice_x000D_.logged_x000D_.date")]          <- "Voice_Dt"
+colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.status_x000D_.effective_x000D_.end.date")]  <- "End_Dt"
+colnames(Dat)[which(colnames(Dat) %in% "Adjusted_x000D_.Status")]                                   <- "Stat"
+colnames(Dat)[which(colnames(Dat) %in% "Active.quoted.Premium")]                                    <- "Act_Prem"
+colnames(Dat)[which(colnames(Dat) %in% "Total.Amount.paid.since.inception.to.current.month")]       <- "Tot_Pd"
+colnames(Dat)[which(colnames(Dat) %in% "Credit.Protection.-.Death.sum.assured")]                    <- "Death_Sum"
+colnames(Dat)[which(colnames(Dat) %in% "Credit.Protection.-.Disability.sum.assured")]               <- "Disb_Sum"
 colnames(Dat)[which(colnames(Dat) %in% "Credit.Protection.-.Temporary.Disability.monthly.benefit")] <- "TTD_Sum"
-colnames(Dat)[which(colnames(Dat) %in% "Critical.Illness.Cover")] <- "CI_Sum"
-colnames(Dat)[which(colnames(Dat) %in% "Retrenchment.benefit")] <- "Retr_Sum"
-colnames(Dat)[which(colnames(Dat) %in% "RAF.benefit")] <- "RAF_Sum"
+colnames(Dat)[which(colnames(Dat) %in% "Critical.Illness.Cover")]                                   <- "CI_Sum"
+colnames(Dat)[which(colnames(Dat) %in% "Retrenchment.benefit")]                                     <- "Retr_Sum"
+colnames(Dat)[which(colnames(Dat) %in% "RAF.benefit")]                                              <- "RAF_Sum"
 
 str(Dat)
 head(Dat)
@@ -51,7 +51,7 @@ Dat_Save <- Dat
 
 full.features <- c("Gender", "Age", "Level.of.Income", "Education", "Postal.code", "Product.code", "Agent.name", "Act_Prem",
                    "Death_Sum", "Disb_Sum", "TTD_Sum", "CI_Sum", "Retr_Sum", "RAF_Sum", "Comm_Dt", "Voice_Dt", "Duration",
-                   "Final_Stat", "Stat")
+                   "Final_Stat", "Stat", "Increase")
 
 Dat <- as.data.frame(Dat_Save)[,full.features]
 Dat <- Dat[rowSums(is.na(Dat)) < 13, ]
@@ -69,10 +69,10 @@ Dat$rand <- runif(nrow(Dat))
 
 feature.names <- c("Gender", "Age", "Level.of.Income", "Education", "Postal.code", "Product.code", "Agent.name", "Act_Prem",
                    "Death_Sum", "Disb_Sum", "TTD_Sum", "CI_Sum", "Retr_Sum", "RAF_Sum", "Voice_Day", "Voice_Month",
-                   "Com_Day", "Com_Month")
+                   "Com_Day", "Com_Month", "Increase")
 
 train <- subset(Dat, rand < 0.8) 
-test <- subset(Dat, rand < 0.8)
+test  <- subset(Dat, rand >= 0.8)
 
 # put IDs for text variables - replace missings by 0 - boosting runs faster
 for (f in feature.names) {
