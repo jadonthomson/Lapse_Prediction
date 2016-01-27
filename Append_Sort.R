@@ -65,10 +65,14 @@ for(lapfile in 1:num_lap_file){
   
   print(lap_File_List[lapfile])
 
+} 
+
+fileXLSDate <- file.mtime(paste(Path, "/Data/", lap_File_List[lapfile], sep = ""))
 All_lap_Data$COMMENCEMENTDATEOFPOLICY <- DateConv(All_lap_Data$COMMENCEMENTDATEOFPOLICY)
 All_lap_Data$STATUSEFFECTIVEENDDATE <- DateConv(All_lap_Data$STATUSEFFECTIVEENDDATE)
+All_lap_Data$DURATION <- as.numeric(((as.Date(substr(fileXLSDate,1,10)) - All_lap_Data$COMMENCEMENTDATEOFPOLICY)/365.25)*12)
+All_lap_Data$DURATION[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] <- as.numeric(((All_lap_Data$STATUSEFFECTIVEENDDATE[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] - All_lap_Data$COMMENCEMENTDATEOFPOLICY[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)])/365.25)*12)
 
-} 
 
 # Remove data from workspace (to save memory and time)
 rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols) 
@@ -77,20 +81,27 @@ rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols)
 
 
 ###################### Calculate the year-to-year increase in QUOTED premiums
-for (i in 2:10){
-  All_lap_Data$Increase <- 0
-  ### NTU -> NA
-  All_lap_Data[All_lap_Data$STATUS == "NTU", "Increase"] <- NA
-  ### duration < 12   -> NA
-  All_lap_Data$Increase[(All_lap_Data$STATUSEFFECTIVEENDDATE - All_lap_Data$COMMENCEMENTDATEOFPOLICY)/365.25 <= 1] <- NA
-  ### increase = (year 2)/(year 1)
-  All_lap_Data$Increase[!is.na(All_lap_Data$Increase)] <- (All_lap_Data[!is.na(All_lap_Data$Increase),paste0("YEAR", as.character(i), "QUOTEDTOTALPREMIUM")])/(All_lap_Data[!is.na(All_lap_Data$Increase),paste0("YEAR", as.character(i - 1), "QUOTEDTOTALPREMIUM")])
-  colnames(All_lap_Data)[which(names(All_lap_Data) == "Increase")] <- paste0("Increase",i)
+
+All_lap_Data$Increase       <-  1
+All_lap_Data$CURRENTPREMIUM <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
+All_lap_Data$LASTREMIUM     <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
+year_len <- ceiling(max(All_lap_Data$DURATION)/12)
+
+
+
+for (i in 2:year_len){
+     # if duration is less than or equal to i but greater than i - 1
+    All_lap_Data$CURRENTPREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)] <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i, "QUOTEDTOTALPREMIUM")]
+              # TOOK data$year i premium as currentpremium
+    All_lap_Data$LASTREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)]     <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i - 1, "QUOTEDTOTALPREMIUM")] 
+              # TOOK data$year i - 1 premium as lastpremium
 }
 
-                        
-                       
-                        
+All_lap_Data$INCREASE <- as.numeric(All_lap_Data$CURRENTPREMIUM)/as.numeric(All_lap_Data$LASTREMIUM)
+All_lap_Data$INCREASE[All_lap_Data$INCREASE == 1] <- NA
+All_lap_Data$INCREASE[All_lap_Data$STATUS == "NTU", "Increase"] <- NA
 
 
-
+                      
+                     
+                      
