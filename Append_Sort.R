@@ -27,34 +27,40 @@ num_lap_file       <-  length(lap_File_List)     #  Number of files in folder - 
 for(lapfile in 1:num_lap_file){
   
   # Check to see if CSV should be created
-  if (file.exists(paste(Path, "/Data/CSV/",paste0(substr(lap_File_List[lapfile], 1, 4), ".csv"), sep = ""))) {
+  file_name <- lap_File_List[lapfile]
+  CSV_file_name <- paste0(substr(file_name, 1, nchar(file_name) - 5), ".csv") # remove everything after the . rather than just the last 5 characters
+  
+  if (file.exists(paste(Path, "/Data/CSV/", CSV_file_name, sep=""))) {
     
-    fileCSVDate <- file.mtime(paste(Path, "/Data/CSV/", paste0(substr(lap_File_List[lapfile], 1, 4), ".csv"), sep = ""))
-    fileXLSDate <- file.mtime(paste(Path, "/Data/", lap_File_List[lapfile], sep = ""))
+    fileCSVDate <- file.mtime(paste(Path, "/Data/CSV/", CSV_file_name, sep = ""))
+    fileXLSDate <- file.mtime(paste(Path, "/Data/", file_name, sep = ""))
     
     if (fileXLSDate > fileCSVDate){
-      excelToCsv(paste(Path, "/Data/CSV/", lap_File_List[lapfile], sep = ""))
+      excelToCsv(paste(Path, "/Data/CSV/", file_name, sep = ""))
     }
   } else {
-    excelToCsv(paste(Path, "/Data/",   lap_File_List[lapfile], sep = ""))
+    excelToCsv(paste(Path, "/Data/",   file_name, sep = ""))
   }
   
   CSV_lap_File_List  <-  list.files(paste(Path, "/Data/CSV/", sep = ""))
   
-  lap_Data <- fread(paste(Path, "/Data/CSV/",paste0(substr(lap_File_List[lapfile], 1, nchar(lap_File_List[lapfile]) - 5), ".csv"), sep = ""),
+  lap_Data <- fread(paste(Path, "/Data/CSV/",CSV_file_name, sep = ""),
                    colClasses  =  "character",
                    header      =  TRUE)
   lap_Data <- as.data.frame(lap_Data)
-  lap_Data <- lap_Data[lap_Data$`Policy Number` != "",]
   
   colnames(lap_Data)  <-  gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(colnames(lap_Data))))
   
+  lap_Data <- lap_Data[lap_Data$POLICYNUMBER != "",]
+
   if(lapfile == 1) {
     All_lap_Data <- lap_Data
+
   } else{
     
     common_cols <- intersect(colnames(All_lap_Data), colnames(lap_Data)) # Combine only the common columns (in case of missmatches)
     uncommon_cols <- c(uncommon_cols, setdiff(colnames(All_lap_Data), colnames(lap_Data)))
+    uncommon_cols <- c(uncommon_cols, setdiff(colnames(lap_Data), colnames(All_lap_Data)))
     
     All_lap_Data <- rbind(
       subset(All_lap_Data,  select = common_cols), 
@@ -75,7 +81,7 @@ All_lap_Data$DURATION[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] <- as.numeric
 
 
 # Remove data from workspace (to save memory and time)
-rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols) 
+rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols,file_name,CSV_file_name) 
 
 
 
@@ -99,11 +105,11 @@ for (i in 2:year_len){
 
 All_lap_Data$INCREASE <- as.numeric(All_lap_Data$CURRENTPREMIUM)/as.numeric(All_lap_Data$LASTREMIUM)
 All_lap_Data$INCREASE[All_lap_Data$INCREASE == 1] <- NA
-All_lap_Data$INCREASE[All_lap_Data$STATUS == "NTU", "Increase"] <- NA
+All_lap_Data$INCREASE[All_lap_Data$STATUS == "NTU"] <- NA
 
 ############ Remove columns
 
-All_lap_Data <- subset(All_lap_Data, select = -C("POLICYNUMBER",
+All_lap_Data <- subset(All_lap_Data, select = C("POLICYNUMBER",
                                                 "POLICYHOLDERFIRSTNAME",
                                                 "POLICYHOLDERSURNAME",
                                                 "ACTIVEQUOTEDPREMIUM",
@@ -125,5 +131,20 @@ All_lap_Data <- subset(All_lap_Data, select = -C("POLICYNUMBER",
                                                 "QUOTEDROADCOVERPREMIUMY1Y10", 
                                                 "QUOTEDFUTUREVAPPREMIUMY1Y10"))
 
+
+
+
+
+
+
+
+########### Clean postal codes
+# we want province and postal codes
+# look at all of the three postal columns and see if you can find one of the 9 provinces
+# leave postal codes.
+
+# strip payment day into just numbers
+
+# from voice log extract day and month.
                      
                       
