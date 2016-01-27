@@ -181,10 +181,116 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 
+########################################################################################
+########################################################################################
 
 
+excelToCsv <- function(file_path, keep_sheets = NULL, ...) {
+  
+  if (dir.exists(paste(tempdir(), "\\RRRRtemp",sep=""))){
+    unlink(paste(tempdir(), "\\RRRRtemp",sep=""), recursive = T)
+  }
+  
+  dir.create(paste(tempdir(), "\\RRRRtemp",sep=""), showWarnings = T)
+  
+  temp_already <- list.files(paste(tempdir(), "\\RRRRtemp",sep=""))
+  
+  file_root <- gsub("([[:print:]]+(/|\\\\))[[:print:]]+", "\\1", file_path)
+  
+  file_name <- gsub("[[:print:]]+(/|\\\\)", "", file_path)
+  file_ext <- gsub("[[:print:]]+(.xls.?)", "\\1", file_path)
+  newName <- gsub("[[:print:]]+(/|\\\\)", "", gsub(file_ext, ".csv", file_path))
+  
+  converter_file <- file(paste0(paste(tempdir(), "\\RRRRtemp",sep=""),"\\", "converter.vbs"))
+  
+  writeLines(
+    c('rem  XLS_To_CSV.vbs',
+      'rem =============================================================',
+      'rem  convert all NON-empty worksheets in an Excel file to csv',
+      'rem  CSV file names will default to Sheet names',
+      'rem  output folder defaults to the folder where the script resides or',
+      'rem  if path is specified with the input file, that path is used',
+      'rem  ',
+      'rem  input parameter 1:  Excel path\\file in argument 1 ',
+      'rem                     (if path is not specified, the current path is defaulted)',
+      'rem  ',
+      'rem ============================================================',
+      '',
+      'Dim strExcelFileName',
+      'Dim strCSVFileName',
+      '',
+      'strExcelFileName = WScript.Arguments.Item(0)',
+      '',
+      'rem get path where script is running',
+      'Set fso = CreateObject ("Scripting.FileSystemObject")',
+      'strScript = Wscript.ScriptFullName',
+      'strScriptPath = fso.GetAbsolutePathName(strScript & "\\..")',
+      '',
+      'rem If the Input file is NOT qualified with a path, default the current path',
+      'LPosition = InStrRev(strExcelFileName, "\\") ',
+      'if LPosition = 0 Then ',
+      '    strExcelFileName = strScriptPath & "\\" & strExcelFileName',
+      'strScriptPath = strScriptPath & "\\" ',
+      'else ',
+      'strScriptPath = Mid(strExcelFileName, 1, LPosition) ',
+      'End If',
+      'rem msgbox LPosition & " - " & strExcelFileName & " - " & strScriptPath',
+      '',
+      'Set objXL = CreateObject("Excel.Application")',
+      'Set objWorkBook = objXL.Workbooks.Open(strExcelFileName)',
+      'objXL.DisplayAlerts = False',
+      '',
+      'rem loop over worksheets',
+      '  For Each sheet In objWorkBook.Sheets  ',
+      '   sheet.UsedRange.Columns.NumberFormat = "0"  ',
+      'if objXL.Application.WorksheetFunction.CountA(sheet.Cells) <> 0 Then ',
+      'rem             sheet.Rows(1).delete',
+      'sheet.SaveAs strScriptPath & sheet.Name & ".csv", 6',
+      '   End If',
+      '  Next',
+      '',
+      'rem clean up  ',
+      'objWorkBook.Close ',
+      'objXL.quit',
+      'Set objXL = Nothing ',
+      'Set objWorkBook = Nothing',
+      'Set fso = Nothing',
+      '',
+      'rem end script'),
+    con = converter_file)
+  
+  close(converter_file)
+  
+  file.copy(file_path, paste(tempdir(), "\\RRRRtemp",sep=""))
+  
+  orig_wd <- getwd()
+  setwd(paste(tempdir(), "\\RRRRtemp",sep=""))
+  
+  file.rename(file_name, paste0("filetoconvert", file_ext))
+  
+  shell(paste("converter.vbs", 
+              paste0("filetoconvert", file_ext)), intern = TRUE)
+  
+  setwd(orig_wd)
+  
+  if(is.null(keep_sheets)) {
+    keep_sheets <- gsub("\\.csv", "", list.files(paste(tempdir(), "\\RRRRtemp",sep=""), pattern = "\\.csv"))
+  }
+  
+  file_flags <- paste0(keep_sheets, ".csv")
+  
+  for(i in 1:length(file_flags)) {
+    file.copy(
+      paste0(paste(tempdir(), "\\RRRRtemp",sep=""), "/", file_flags[i]), 
+      paste(file_root, "CSV\\", newName, sep = ""), 
+      overwrite = TRUE)
+  }
+  
+  suppressWarnings(file.remove(
+    paste0(paste(tempdir(), "\\RRRRtemp",sep=""),
+           "/",
+           list.files(paste(tempdir(), "\\RRRRtemp",sep=""))[!(list.files(paste(tempdir(), "\\RRRRtemp",sep="")) %in% temp_already)])))
+  
+}
 
-
-
-
-
+######################################################################################################
