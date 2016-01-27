@@ -6,6 +6,7 @@
 
 Path <- getwd()
 source(paste(Path, "/Lapse_Prediction/Initialize.R", sep = ""))
+uncommon_cols <- c()
 
 #############
 # Load Data #
@@ -20,7 +21,8 @@ source(paste(Path, "/Lapse_Prediction/Initialize.R", sep = ""))
 
 # Start
 lap_File_List      <-  list.files(paste(Path, "/Data", sep = ""))
-num_lap_file       <-  length(lap_File_List) - 1    #  Number of files in folder - 2 due to folders
+lap_File_List      <-  lap_File_List[lap_File_List != "CSV"]
+num_lap_file       <-  length(lap_File_List)     #  Number of files in folder - 2 due to folders
 
 for(lapfile in 1:num_lap_file){
   
@@ -45,55 +47,50 @@ for(lapfile in 1:num_lap_file){
   lap_Data <- as.data.frame(lap_Data)
   lap_Data <- lap_Data[lap_Data$`Policy Number` != "",]
   
-  #if(lapfile == 1) {
-  #  All_lap_Data <- lap_Data
-  #} else{
-  #  
-  #  common_cols <- intersect(colnames(All_lap_Data), colnames(lap_Data)) # Combine only the common columns (in case of missmatches)
-  #  
-  #  All_lap_Data <- rbind(
-  #    subset(All_lap_Data,  select = common_cols), 
-  #    subset(lap_Data,      select = common_cols)
-  #  )
+  colnames(lap_Data)  <-  gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(colnames(lap_Data))))
+  
+  if(lapfile == 1) {
+    All_lap_Data <- lap_Data
+  } else{
+    
+    common_cols <- intersect(colnames(All_lap_Data), colnames(lap_Data)) # Combine only the common columns (in case of missmatches)
+    uncommon_cols <- c(uncommon_cols, setdiff(colnames(All_lap_Data), colnames(lap_Data)))
+    
+    All_lap_Data <- rbind(
+      subset(All_lap_Data,  select = common_cols), 
+      subset(lap_Data,      select = common_cols)
+    )
     
   }
   
   print(lap_File_List[lapfile])
-  
-}
+
+All_lap_Data$COMMENCEMENTDATEOFPOLICY <- DateConv(All_lap_Data$COMMENCEMENTDATEOFPOLICY)
+All_lap_Data$STATUSEFFECTIVEENDDATE <- DateConv(All_lap_Data$STATUSEFFECTIVEENDDATE)
+
+} 
 
 # Remove data from workspace (to save memory and time)
-rm(cl_Data, clfile, num_cl_file, cl_File_List, common_cols, fileCSVDate, fileXLSDate) 
-
-
-
-
-
-
-####################### Import each of the three CSVs
-
-                        ############ Make sure no formulas are copied
-                        
-                        ############ Headings might be a problem
-
-                        ############ Sub the column headings using the gsub functions
-
-  
-
-####################### Append CSVs by column headers #########################
+rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols) 
 
 
 
 
 ###################### Calculate the year-to-year increase in QUOTED premiums
-                        ### NTU -> NA
-                        ### duration < 12   -> NA
-                        ### increase = (year 2)/(year 1)
+for (i in 2:10){
+  All_lap_Data$Increase <- 0
+  ### NTU -> NA
+  All_lap_Data[All_lap_Data$STATUS == "NTU", "Increase"] <- NA
+  ### duration < 12   -> NA
+  All_lap_Data$Increase[(All_lap_Data$STATUSEFFECTIVEENDDATE - All_lap_Data$COMMENCEMENTDATEOFPOLICY)/365.25 <= 1] <- NA
+  ### increase = (year 2)/(year 1)
+  All_lap_Data$Increase[!is.na(All_lap_Data$Increase)] <- (All_lap_Data[!is.na(All_lap_Data$Increase),paste0("YEAR", as.character(i), "QUOTEDTOTALPREMIUM")])/(All_lap_Data[!is.na(All_lap_Data$Increase),paste0("YEAR", as.character(i - 1), "QUOTEDTOTALPREMIUM")])
+  colnames(All_lap_Data)[which(names(All_lap_Data) == "Increase")] <- paste0("Increase",i)
+}
+
+                        
+                       
+                        
 
 
 
-# Load Correct Claims File Here
-Dat <- read.xlsx(paste(Path,"/Data/Lapse_Data.xlsx", sep = ""), 
-                 sheet = "Lapse_Data", 
-                 detectDates = TRUE, 
-                 colNames = TRUE)
