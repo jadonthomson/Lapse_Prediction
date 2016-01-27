@@ -101,7 +101,29 @@ All_lap_Data$INCREASE <- as.numeric(All_lap_Data$CURRENTPREMIUM)/as.numeric(All_
 All_lap_Data$INCREASE[All_lap_Data$INCREASE == 1] <- NA
 All_lap_Data$INCREASE[All_lap_Data$STATUS == "NTU", "Increase"] <- NA
 
+############ Remove columns
 
-                      
+All_lap_Data <- subset(All_lap_Data, select = -C("POLICYNUMBER",
+                                                "POLICYHOLDERFIRSTNAME",
+                                                "POLICYHOLDERSURNAME",
+                                                "ACTIVEQUOTEDPREMIUM",
+                                                "INITIALLIFEINSURED",
+                                                "FIRSTNAMELIFEINSURED",
+                                                "SURNAMELIFEINSURED",
+                                                "DOBOFLIFEINSURED",
+                                                "IDNUMBEROFLIFEINSURED",
+                                                "REINSURER",
+                                                "COMMISSIONEXCLVAT",
+                                                "ZLADMINFEEINCLVAT",
+                                                "ZLBINDERFEEINCLVAT",
+                                                "YEAR1QUOTEDDEATHPREMIUM",
+                                                "YEAR1QUOTEDDISABILITYPREMIUM",
+                                                "YEAR1QUOTEDTEMPORARYDISABILITYPREMIUM",
+                                                "YEAR1QUOTEDCRITICALILLNESSPREMIUM",
+                                                "QUOTEDRETRENCHMENTPREMIUMY1Y10",
+                                                "QUOTEDRAFPREMIUMY1Y10", 
+                                                "QUOTEDROADCOVERPREMIUMY1Y10", 
+                                                "QUOTEDFUTUREVAPPREMIUMY1Y10"))
+
                      
                       
