@@ -267,12 +267,22 @@ Names <- c("AFFINITYGROUP",
            "NUMBEROFBENEFICIARIES",
            "PPB")
 
-
-# Remove the data
+# Remove the unwanted data
 All_lap_Data <- subset(All_lap_Data, select = Names)
 
 
 # If weight is outside the interquartile range, bring it to IQR boundry.
+# first find the interquartile range
+weight <- gsub(" ", "", toupper(All_lap_Data$WEIGHT130KGSORWEIGHTOLDPOLICIES))
+weight[weight == "NOTANSWERED" | weight == ""]        <-  NA
+weight[weight == "YES"]                               <-  130
+mean                                                  <-  mean(as.numeric(weight), na.rm = T)
+IQR                                                   <-  IQR(weight, na.rm = T)
+weight[weight == "NO"]                                <-  mean
+weight                                                <-  as.numeric(weight)
+weight[weight > mean + 2*IQR]                         <-  mean + IQR
+weight[weight < mean - 2*IQR]                         <-  mean - IQR
+
 
 # We need the number of beneficiaries and the relationship to the policyholder.
 # Cleaning all relationship columns
@@ -306,22 +316,4 @@ All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("st", "", All_lap_Data$PREMIUMPAY
 All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("nd", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
 All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("th", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
 
-
-
-
-
-
-
-
-
-
-
-
-
-############ Remove columns
-
-All_lap_Data <- subset(All_lap_Data, select = Names)
-
-                                    
-HEADERS <- c()
-HEADERS <- c(HEADERS, setdiff(c(), colnames(All_lap_Data)))                    
+                  
