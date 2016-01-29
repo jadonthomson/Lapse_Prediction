@@ -264,7 +264,6 @@ Names <- c("AFFINITYGROUP",
            "RELATIONSHIPOFBENEFICIARY7",
            "VOICELOGGEDENDORSEMENT",
            "TOTALAMOUNTPAIDSINCEINCEPTIONTOCURRENTMONTH",
-           "NUMBEROFBENEFICIARIES",
            "PPB")
 
 # Remove the unwanted data
@@ -282,6 +281,7 @@ weight[weight == "NO"]                                <-  mean
 weight                                                <-  as.numeric(weight)
 weight[weight > mean + 2*IQR]                         <-  mean + IQR
 weight[weight < mean - 2*IQR]                         <-  mean - IQR
+All_lap_Data$WEIGHT130KGSORWEIGHTOLDPOLICIES          <-  weight
 
 
 # We need the number of beneficiaries and the relationship to the policyholder.
@@ -291,7 +291,6 @@ temp     <-  toupper(gsub(" ", "", as.matrix(temp)))
 All_lap_Data[colnames(All_lap_Data) %in% colnames(temp)] <- temp 
 
 # finding the names of all the columns with "relationshipofbeneficiary" to count the number of beneficiaries
-
 All_lap_Data$NUMBEROFBENEFICIARIES <- 0
 temp[temp != ""] <- 1
 temp[temp == ""] <- 0
@@ -305,15 +304,15 @@ All_lap_Data[colnames(All_lap_Data) %in% colnames(temp)] <- temp
 
 # count the number of credit providers
 All_lap_Data$NOCREDITPROVIDERS <- 0
-temp[temp != ""] <- 1
-temp[temp == ""] <- 0
-temp <- apply(temp, 2, as.numeric)
+temp[temp != ""]               <- 1
+temp[temp == ""]               <- 0
+temp                           <- apply(temp, 2, as.numeric)
 All_lap_Data$NOCREDITPROVIDERS <- rowSums(temp)
 
 # sort out premium debit day column (take away th and rd....)
-All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("last day", 31, All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
-All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("st", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
-All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("nd", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
-All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("th", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("last day", 31, All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("st", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("nd", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("th", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
 
-                  
+HEADERS <- c(HEADERS, setdiff(Names, colnames(All_lap_Data)))                  
