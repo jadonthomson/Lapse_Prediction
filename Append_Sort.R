@@ -4,6 +4,10 @@
 # Setup #
 #########
 
+
+###### Make sure the working directory is right. #######
+
+
 Path <- getwd()
 source(paste(Path, "/Lapse_Prediction/Initialize.R", sep = ""))
 uncommon_cols <- c()
@@ -190,30 +194,8 @@ All_lap_Data$HEIGHTINCM[!as.numeric(All_lap_Data$HEIGHTINCM)] <- mean(All_lap_Da
 All_lap_Data$HEIGHTINCM[All_lap_Data$HEIGHTINCM < 100 & !is.na(All_lap_Data$HEIGHTINCM)] <- All_lap_Data$HEIGHTINCM[All_lap_Data$HEIGHTINCM < 100 & !is.na(All_lap_Data$HEIGHTINCM)] + 100 
 
 
-# If weight is outside the interquartile range, bring it to IQR boundry.
 
-# We need the number of beneficiaries and the relationship to the policyholder.
-
-# Number or credit providers.
-
-# sort out premium debit day column (take away th and rd....)
-
-# if there is end date = lapse
-    # if no end date = active             ########## do these changes at the beginning of the code.
-
-# exclude all data four months back.
-
-# do the PPB indicator (1 if PPB, 0 if not)
-
-
-
-
-
-
-
-
-
-############ Remove columns
+# choose the columns you want to keep
 
 Names <- c("AFFINITYGROUP",
            "CURRENTPREMIUM",
@@ -353,8 +335,45 @@ Names <- c("AFFINITYGROUP",
            "IDNUMBEROFBENEFICIARY7",
            "PERCENTAGEBENEFITOFBENEFICIARY7",
            "VOICELOGGEDENDORSEMENT",
-           "TOTALAMOUNTPAIDSINCEINCEPTIONTOCURRENTMONTH")
+           "TOTALAMOUNTPAIDSINCEINCEPTIONTOCURRENTMONTH",
+           "NUMBEROFBENEFICIARIES")
 
+
+
+# If weight is outside the interquartile range, bring it to IQR boundry.
+
+# We need the number of beneficiaries and the relationship to the policyholder.
+# Cleaning all relationship columns
+
+
+# finding the names of all the columns with "relationshipofbeneficiary" to count the number of beneficiaries
+temp     <-  select(All_lap_Data, contains("RELATIONSHIPOFBENEFICIARY"))
+All_lap_Data$NUMBEROFBENEFICIARIES <- 0
+temp[temp != ""] <- 1
+temp[temp == ""] <- 0
+temp <- apply(temp, 2, as.numeric)
+All_lap_Data$NUMBEROFBENEFICIARIES <- rowSums(temp)
+
+# Number or credit providers.
+
+# sort out premium debit day column (take away th and rd....)
+
+# if there is end date = lapse
+    # if no end date = active             ########## do these changes at the beginning of the code.
+
+# exclude all data four months back.
+
+# do the PPB indicator (1 if PPB, 0 if not)
+
+
+
+
+
+
+
+
+
+############ Remove columns
 
 All_lap_Data <- subset(All_lap_Data, select = Names)
 
