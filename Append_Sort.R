@@ -8,7 +8,7 @@
 ###### Make sure the working directory is right. #######
 
 
-Path <- getwd()
+Path <- substr(getwd(),1, nchar(getwd()) - 17)
 source(paste(Path, "/Lapse_Prediction/Initialize.R", sep = ""))
 uncommon_cols <- c()
 
@@ -97,7 +97,7 @@ rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols,file_name,CSV_fil
 
 All_lap_Data$Increase       <-  1
 All_lap_Data$CURRENTPREMIUM <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
-All_lap_Data$LASTREMIUM     <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
+All_lap_Data$LASTPREMIUM     <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
 year_len <- ceiling(max(All_lap_Data$DURATION)/12)
 
 
@@ -106,7 +106,7 @@ for (i in 2:year_len){
      # if duration is less than or equal to i but greater than i - 1
     All_lap_Data$CURRENTPREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)] <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i, "QUOTEDTOTALPREMIUM")]
               # TOOK data$year i premium as currentpremium
-    All_lap_Data$LASTREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)]     <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i - 1, "QUOTEDTOTALPREMIUM")] 
+    All_lap_Data$LASTPREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)]     <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i - 1, "QUOTEDTOTALPREMIUM")] 
               # TOOK data$year i - 1 premium as lastpremium
 }
 
@@ -239,122 +239,55 @@ Names <- c("AFFINITYGROUP",
            "CRITICALILLNESSCOVER",
            "ROADCOVERINCLUDED",
            "CREDITPROVIDER1",
-           "ACCOUNTTYPEWITHCREDITPROVIDER1",
-           "ACCOUNTNUMBERWITHCREDITPROVIDER1",
-           "DEATHBENEFITTOCEDETOCREDITPROVIDER1",
-           "PTDBENEFITTOCEDETOCREDITPROVIDER1",
-           "CRITICALILLNESSBENEFITTOCEDETOCREDITPROVIDER1",
-           "TTDBENEFITTOCEDETOCREDITPROVIDER1",
-           "RETRENCHMENTBENEFITTOCEDETOCREDITPROVIDER1",
-           "RETRENCHMENTBENEFITPERIODFORCREDITPROVIDER1",
            "CREDITPROVIDER2", 
-           "ACCOUNTTYPEWITHCREDITPROVIDER2",
-           "ACCOUNTNUMBERWITHCREDITPROVIDER2",
-           "DEATHBENEFITTOCEDETOCREDITPROVIDER2",
-           "PTDBENEFITTOCEDETOCREDITPROVIDER2",
-           "CRITICALILLNESSBENEFITTOCEDETOCREDITPROVIDER2",
-           "TTDBENEFITTOCEDETOCREDITPROVIDER2",
-           "RETRENCHMENTBENEFITTOCEDETOCREDITPROVIDER2",
-           "RETRENCHMENTBENEFITPERIODFORCREDITPROVIDER2",
            "CREDITPROVIDER3",
-           "ACCOUNTTYPEWITHCREDITPROVIDER3",
-           "ACCOUNTNUMBERWITHCREDITPROVIDER3",
-           "DEATHBENEFITTOCEDETOCREDITPROVIDER3",
-           "PTDBENEFITTOCEDETOCREDITPROVIDER3",
-           "CRITICALILLNESSBENEFITTOCEDETOCREDITPROVIDER3",
-           "TTDBENEFITTOCEDETOCREDITPROVIDER3",
-           "RETRENCHMENTBENEFITTOCEDETOCREDITPROVIDER3",
-           "RETRENCHMENTBENEFITPERIODFORCREDITPROVIDER3",
            "CREDITPROVIDER4",
-           "ACCOUNTTYPEWITHCREDITPROVIDER4",
-           "ACCOUNTNUMBERWITHCREDITPROVIDER4",
-           "DEATHBENEFITTOCEDETOCREDITPROVIDER4",
-           "PTDBENEFITTOCEDETOCREDITPROVIDER4",
-           "CRITICALILLNESSBENEFITTOCEDETOCREDITPROVIDER4",
-           "TTDBENEFITTOCEDETOCREDITPROVIDER4",
-           "RETRENCHMENTBENEFITTOCEDETOCREDITPROVIDER4",
-           "RETRENCHMENTBENEFITPERIODFORCREDITPROVIDER4",
            "CREDITPROVIDER5",
-           "ACCOUNTTYPEWITHCREDITPROVIDER5",
-           "ACCOUNTNUMBERWITHCREDITPROVIDER5",
-           "DEATHBENEFITTOCEDETOCREDITPROVIDER5",
-           "PTDBENEFITTOCEDETOCREDITPROVIDER5",
-           "CRITICALILLNESSBENEFITTOCEDETOCREDITPROVIDER5",
-           "TTDBENEFITTOCEDETOCREDITPROVIDER5",
-           "RETRENCHMENTBENEFITTOCEDETOCREDITPROVIDER5",
-           "RETRENCHMENTBENEFITPERIODFORCREDITPROVIDER5",
            "CREDITPROVIDER6",
-           "ACCOUNTTYPEWITHCREDITPROVIDER6",
-           "ACCOUNTNUMBERWITHCREDITPROVIDER6",
-           "DEATHBENEFITTOCEDETOCREDITPROVIDER6",
-           "PTDBENEFITTOCEDETOCREDITPROVIDER6",
-           "CRITICALILLNESSBENEFITTOCEDETOCREDITPROVIDER6",
-           "TTDBENEFITTOCEDETOCREDITPROVIDER6",
-           "RETRENCHMENTBENEFITTOCEDETOCREDITPROVIDER6",
-           "RETRENCHMENTBENEFITPERIODFORCREDITPROVIDER6",
            "CREDITPROVIDER7",
-           "ACCOUNTTYPEWITHCREDITPROVIDER7",
-           "ACCOUNTNUMBERWITHCREDITPROVIDER7",
-           "DEATHBENEFITTOCEDETOCREDITPROVIDER7",
-           "PTDBENEFITTOCEDETOCREDITPROVIDER7",
-           "CRITICALILLNESSBENEFITTOCEDETOCREDITPROVIDER7",
-           "TTDBENEFITTOCEDETOCREDITPROVIDER7",
-           "RETRENCHMENTBENEFITTOCEDETOCREDITPROVIDER7",
-           "RETRENCHMENTBENEFITPERIODFORCREDITPROVIDER7",
-           "SURNAMEOFBENEFICIARY1",
            "RELATIONSHIPOFBENEFICIARY1",
-           "PERCENTAGEBENEFITOFBENEFICIARY1",
-           "FULLNAMESBENEFICIARY2",
-           "SURNAMEOFBENEFICIARY2",
            "RELATIONSHIPOFBENEFICIARY2",
-           "IDNUMBEROFBENEFICIARY2",
-           "PERCENTAGEBENEFITOFBENEFICIARY2",
-           "FULLNAMESBENEFICIARY3",
-           "SURNAMEOFBENEFICIARY3",
            "RELATIONSHIPOFBENEFICIARY3",
-           "IDNUMBEROFBENEFICIARY3",
-           "PERCENTAGEBENEFITOFBENEFICIARY3",
-           "FULLNAMESBENEFICIARY4",
-           "SURNAMEOFBENEFICIARY4",
            "RELATIONSHIPOFBENEFICIARY4",
-           "IDNUMBEROFBENEFICIARY4",
-           "PERCENTAGEBENEFITOFBENEFICIARY4",
-           "FULLNAMESBENEFICIARY5",
-           "SURNAMEOFBENEFICIARY5",
            "RELATIONSHIPOFBENEFICIARY5",
-           "IDNUMBEROFBENEFICIARY5",
-           "PERCENTAGEBENEFITOFBENEFICIARY5",
-           "FULLNAMESBENEFICIARY6",
-           "SURNAMEOFBENEFICIARY6",
            "RELATIONSHIPOFBENEFICIARY6",
-           "IDNUMBEROFBENEFICIARY6",
-           "PERCENTAGEBENEFITOFBENEFICIARY6",
-           "FULLNAMESBENEFICIARY7",
-           "SURNAMEOFBENEFICIARY7",
            "RELATIONSHIPOFBENEFICIARY7",
-           "IDNUMBEROFBENEFICIARY7",
-           "PERCENTAGEBENEFITOFBENEFICIARY7",
            "VOICELOGGEDENDORSEMENT",
            "TOTALAMOUNTPAIDSINCEINCEPTIONTOCURRENTMONTH",
            "NUMBEROFBENEFICIARIES")
 
+
+# Remove the data
+All_lap_Data <- subset(All_lap_Data, select = Names)
 
 
 # If weight is outside the interquartile range, bring it to IQR boundry.
 
 # We need the number of beneficiaries and the relationship to the policyholder.
 # Cleaning all relationship columns
-
+temp     <-  select(All_lap_Data, contains("RELATIONSHIPOFBENEFICIARY"))
+temp     <-  toupper(gsub(" ", "", as.matrix(temp)))
+All_lap_Data[colnames(All_lap_Data) %in% colnames(temp)] <- temp 
 
 # finding the names of all the columns with "relationshipofbeneficiary" to count the number of beneficiaries
-temp     <-  select(All_lap_Data, contains("RELATIONSHIPOFBENEFICIARY"))
+
 All_lap_Data$NUMBEROFBENEFICIARIES <- 0
 temp[temp != ""] <- 1
 temp[temp == ""] <- 0
 temp <- apply(temp, 2, as.numeric)
 All_lap_Data$NUMBEROFBENEFICIARIES <- rowSums(temp)
 
-# Number or credit providers.
+# Number of credit providers and cleaning provider names.
+temp     <-  select(All_lap_Data, contains("CREDITPROVIDER"))
+temp     <-  as.data.frame(toupper(gsub(" ", "", as.matrix(temp))))
+All_lap_Data[colnames(All_lap_Data) %in% colnames(temp)] <- temp
+
+# count the number of credit providers
+All_lap_Data$NOCREDITPROVIDERS <- 0
+temp[temp != ""] <- 1
+temp[temp == ""] <- 0
+temp <- apply(temp, 2, as.numeric)
+All_lap_Data$NOCREDITPROVIDERS <- rowSums(temp)
 
 # sort out premium debit day column (take away th and rd....)
 
