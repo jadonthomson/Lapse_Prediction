@@ -90,7 +90,11 @@ All_lap_Data$DURATION[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] <- as.numeric
 # Remove data from workspace (to save memory and time)
 rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols,file_name,CSV_file_name) 
 
-
+# Sort out status column
+# if there is end date = lapse
+All_lap_Data$STATUS[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] <- "LAP"    # could make this 1 and act = 0
+# if no end date = active             ########## do these changes at the beginning of the code.
+All_lap_Data$STATUS[is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] <- "ACT"
 
 
 ###################### Calculate the year-to-year increase in QUOTED premiums
@@ -193,6 +197,12 @@ All_lap_Data$HEIGHTINCM <- as.numeric(All_lap_Data$HEIGHTINCM)
 All_lap_Data$HEIGHTINCM[!as.numeric(All_lap_Data$HEIGHTINCM)] <- mean(All_lap_Data$HEIGHTINCM[!is.na(All_lap_Data$HEIGHTINCM)])
 All_lap_Data$HEIGHTINCM[All_lap_Data$HEIGHTINCM < 100 & !is.na(All_lap_Data$HEIGHTINCM)] <- All_lap_Data$HEIGHTINCM[All_lap_Data$HEIGHTINCM < 100 & !is.na(All_lap_Data$HEIGHTINCM)] + 100 
 
+# do the PPB indicator (1 if PPB, 0 if not)
+All_lap_Data$PPB <- gsub(" ", "", All_lap_Data$PPBTOCELLCAPTIVE)
+All_lap_Data$PPB[All_lap_Data$PPB != ""]  <- 1
+All_lap_Data$PPB[All_lap_Data$PPB == ""]  <- 0
+view <- All_lap_Data$PPB
+
 
 
 # choose the columns you want to keep
@@ -254,7 +264,8 @@ Names <- c("AFFINITYGROUP",
            "RELATIONSHIPOFBENEFICIARY7",
            "VOICELOGGEDENDORSEMENT",
            "TOTALAMOUNTPAIDSINCEINCEPTIONTOCURRENTMONTH",
-           "NUMBEROFBENEFICIARIES")
+           "NUMBEROFBENEFICIARIES",
+           "PPB")
 
 
 # Remove the data
@@ -290,13 +301,14 @@ temp <- apply(temp, 2, as.numeric)
 All_lap_Data$NOCREDITPROVIDERS <- rowSums(temp)
 
 # sort out premium debit day column (take away th and rd....)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("last day", 31, All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("st", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("nd", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
+All_lap_Data$PREMIUMPAYERDEBITORDERDAY <- gsub("th", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
 
-# if there is end date = lapse
-    # if no end date = active             ########## do these changes at the beginning of the code.
 
-# exclude all data four months back.
 
-# do the PPB indicator (1 if PPB, 0 if not)
+
 
 
 
