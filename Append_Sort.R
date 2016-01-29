@@ -1,24 +1,23 @@
-# Import, append and sort data
+## Import, append and sort lapse data
+## Jadon
+## Jan 2016
 
-#####################################################################################################
+##########
 # Setup #
 #########
 
 
 ###### Make sure the working directory is right. #######
-
-
 Path <- substr(getwd(),1, nchar(getwd()) - 17)
 source(paste(Path, "/Lapse_Prediction/Initialize.R", sep = ""))
-uncommon_cols <- c()
+#uncommon_cols <- c()
+
+
+
 
 #############
 # Load Data #
 #############
-
-
-
-
 
 
 ####################### Convert excel to CSV if they have been updated ############################
@@ -63,8 +62,8 @@ for(lapfile in 1:num_lap_file){
   } else{
     
     common_cols <- intersect(colnames(All_lap_Data), colnames(lap_Data)) # Combine only the common columns (in case of missmatches)
-    uncommon_cols <- c(uncommon_cols, setdiff(colnames(All_lap_Data), colnames(lap_Data)))
-    uncommon_cols <- c(uncommon_cols, setdiff(colnames(lap_Data), colnames(All_lap_Data)))
+    #uncommon_cols <- c(uncommon_cols, setdiff(colnames(All_lap_Data), colnames(lap_Data)))
+    #uncommon_cols <- c(uncommon_cols, setdiff(colnames(lap_Data), colnames(All_lap_Data)))
     
     All_lap_Data <- rbind(
       subset(All_lap_Data,  select = common_cols), 
@@ -77,18 +76,18 @@ for(lapfile in 1:num_lap_file){
 
 } 
 
-fileXLSDate <- file.mtime(paste(Path, "/Data/", lap_File_List[lapfile], sep = ""))
-All_lap_Data$COMMENCEMENTDATEOFPOLICY <- DateConv(All_lap_Data$COMMENCEMENTDATEOFPOLICY)
-All_lap_Data$STATUSEFFECTIVEENDDATE <- DateConv(All_lap_Data$STATUSEFFECTIVEENDDATE)
-All_lap_Data$POSTALADDRESS1 <- gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(All_lap_Data$POSTALADDRESS1)))
-All_lap_Data$POSTALADDRESS2 <- gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(All_lap_Data$POSTALADDRESS2)))
-All_lap_Data$POSTALADDRESS3 <- gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(All_lap_Data$POSTALADDRESS3)))
-All_lap_Data$DURATION <- as.numeric(((as.Date(substr(fileXLSDate,1,10)) - All_lap_Data$COMMENCEMENTDATEOFPOLICY)/365.25)*12)
+fileXLSDate                            <- file.mtime(paste(Path, "/Data/", lap_File_List[lapfile], sep = ""))
+All_lap_Data$COMMENCEMENTDATEOFPOLICY  <- DateConv(All_lap_Data$COMMENCEMENTDATEOFPOLICY)
+All_lap_Data$STATUSEFFECTIVEENDDATE    <- DateConv(All_lap_Data$STATUSEFFECTIVEENDDATE)
+All_lap_Data$POSTALADDRESS1            <- gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(All_lap_Data$POSTALADDRESS1)))
+All_lap_Data$POSTALADDRESS2            <- gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(All_lap_Data$POSTALADDRESS2)))
+All_lap_Data$POSTALADDRESS3            <- gsub(" ","",gsub("[^[:alnum:] ]", "", toupper(All_lap_Data$POSTALADDRESS3)))
+All_lap_Data$DURATION                  <- as.numeric(((as.Date(substr(fileXLSDate,1,10)) - All_lap_Data$COMMENCEMENTDATEOFPOLICY)/365.25)*12)
 All_lap_Data$DURATION[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] <- as.numeric(((All_lap_Data$STATUSEFFECTIVEENDDATE[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] - All_lap_Data$COMMENCEMENTDATEOFPOLICY[!is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)])/365.25)*12)
 
 
 # Remove data from workspace (to save memory and time)
-rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols,file_name,CSV_file_name) 
+rm(lap_Data, lapfile, num_lap_file, lap_File_List, common_cols, file_name, CSV_file_name, CSV_lap_File_List, fileCSVDate, fileXLSDate) 
 
 # Sort out status column
 # if there is end date = lapse
@@ -99,26 +98,26 @@ All_lap_Data$STATUS[is.na(All_lap_Data$STATUSEFFECTIVEENDDATE)] <- "ACT"
 
 ###################### Calculate the year-to-year increase in QUOTED premiums
 
-All_lap_Data$Increase       <-  1
-All_lap_Data$CURRENTPREMIUM <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
+All_lap_Data$Increase        <-  1
+All_lap_Data$CURRENTPREMIUM  <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
 All_lap_Data$LASTPREMIUM     <-  All_lap_Data$YEAR1QUOTEDTOTALPREMIUM
-year_len <- ceiling(max(All_lap_Data$DURATION)/12)
+year_len                     <-  ceiling(max(All_lap_Data$DURATION)/12)
 
 
 
 for (i in 2:year_len){
-     # if duration is less than or equal to i but greater than i - 1
+    # if duration is less than or equal to i but greater than i - 1
     All_lap_Data$CURRENTPREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)] <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i, "QUOTEDTOTALPREMIUM")]
-              # TOOK data$year i premium as currentpremium
-    All_lap_Data$LASTPREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)]     <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i - 1, "QUOTEDTOTALPREMIUM")] 
-              # TOOK data$year i - 1 premium as lastpremium
+    # TOOK data$year i premium as currentpremium
+    All_lap_Data$LASTPREMIUM[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1)]    <-  All_lap_Data[All_lap_Data$DURATION <= 12*i & All_lap_Data$DURATION >= 12*(i - 1),paste0("YEAR", i - 1, "QUOTEDTOTALPREMIUM")] 
+    # TOOK data$year i - 1 premium as lastpremium
 }
 
 All_lap_Data$INCREASE <- as.numeric(All_lap_Data$CURRENTPREMIUM)/as.numeric(All_lap_Data$LASTREMIUM)
-All_lap_Data$INCREASE[All_lap_Data$INCREASE == 1] <- NA
-All_lap_Data$INCREASE[All_lap_Data$STATUS == "NTU"] <- NA
+All_lap_Data$INCREASE[All_lap_Data$INCREASE == 1]    <- NA
+All_lap_Data$INCREASE[All_lap_Data$STATUS == "NTU"]  <- NA
 
-
+rm(year_len)
 
 ########### Clean postal codes
 # we want province and postal codes
@@ -145,9 +144,10 @@ Provinces <- c("WESTERNCAPE",
 
 # look at all of the three postal columns and see if you can find one of the 9 provinces
 All_lap_Data$PROVINCE <- ""
-All_lap_Data$PROVINCE[All_lap_Data$POSTALADDRESS3 %in% Provinces] <- All_lap_Data$POSTALADDRESS3[All_lap_Data$POSTALADDRESS3 %in% Provinces]
-All_lap_Data$PROVINCE[All_lap_Data$POSTALADDRESS2 %in% Provinces] <- All_lap_Data$POSTALADDRESS2[All_lap_Data$POSTALADDRESS2 %in% Provinces]
-All_lap_Data$PROVINCE[All_lap_Data$POSTALADDRESS1 %in% Provinces] <- All_lap_Data$POSTALADDRESS1[All_lap_Data$POSTALADDRESS1 %in% Provinces]
+All_lap_Data$PROVINCE[All_lap_Data$POSTALADDRESS3 %in% Provinces]  <- All_lap_Data$POSTALADDRESS3[All_lap_Data$POSTALADDRESS3 %in% Provinces]
+All_lap_Data$PROVINCE[All_lap_Data$POSTALADDRESS2 %in% Provinces]  <- All_lap_Data$POSTALADDRESS2[All_lap_Data$POSTALADDRESS2 %in% Provinces]
+All_lap_Data$PROVINCE[All_lap_Data$POSTALADDRESS1 %in% Provinces]  <- All_lap_Data$POSTALADDRESS1[All_lap_Data$POSTALADDRESS1 %in% Provinces]
+rm(Provinces)
 
 # Replace cities with provinces:
 All_lap_Data$PROVINCE[All_lap_Data$PROVINCE %in% c("CAPETOWN",
@@ -201,7 +201,6 @@ All_lap_Data$HEIGHTINCM[All_lap_Data$HEIGHTINCM < 100 & !is.na(All_lap_Data$HEIG
 All_lap_Data$PPB <- gsub(" ", "", All_lap_Data$PPBTOCELLCAPTIVE)
 All_lap_Data$PPB[All_lap_Data$PPB != ""]  <- 1
 All_lap_Data$PPB[All_lap_Data$PPB == ""]  <- 0
-view <- All_lap_Data$PPB
 
 
 
@@ -224,6 +223,7 @@ Names <- c("AFFINITYGROUP",
            "PREMIUMPAYERDEBITORDERDAY",
            "COMMENCEMENTDATEOFPOLICY",
            "STATUS",
+           "DURATION",
            "STATUSEFFECTIVEENDDATE",
            "AGENTNAME",
            "VOICELOGGEDDAY",
@@ -268,6 +268,7 @@ Names <- c("AFFINITYGROUP",
 
 # Remove the unwanted data
 All_lap_Data <- subset(All_lap_Data, select = Names)
+rm(Names)
 
 
 # If weight is outside the interquartile range, bring it to IQR boundry.
@@ -282,7 +283,7 @@ weight                                                <-  as.numeric(weight)
 weight[weight > mean + 2*IQR]                         <-  mean + IQR
 weight[weight < mean - 2*IQR]                         <-  mean - IQR
 All_lap_Data$WEIGHT130KGSORWEIGHTOLDPOLICIES          <-  weight
-
+rm(mean, IQR, weight)
 
 # We need the number of beneficiaries and the relationship to the policyholder.
 # Cleaning all relationship columns
@@ -299,15 +300,17 @@ All_lap_Data$NUMBEROFBENEFICIARIES <- rowSums(temp)
 
 # Number of credit providers and cleaning provider names.
 temp     <-  select(All_lap_Data, contains("CREDITPROVIDER"))
-temp     <-  as.data.frame(toupper(gsub(" ", "", as.matrix(temp))))
+temp     <-  toupper(gsub(" ", "", as.matrix(temp)))
 All_lap_Data[colnames(All_lap_Data) %in% colnames(temp)] <- temp
 
 # count the number of credit providers
-All_lap_Data$NOCREDITPROVIDERS <- 0
-temp[temp != ""]               <- 1
-temp[temp == ""]               <- 0
-temp                           <- apply(temp, 2, as.numeric)
-All_lap_Data$NOCREDITPROVIDERS <- rowSums(temp)
+All_lap_Data$NOCREDITPROVIDERS          <-  0
+temp[temp != ""]                        <-  1
+temp[temp == ""]                        <-  0
+temp                                    <-  apply(temp, 2, as.numeric)
+All_lap_Data$NOCREDITPROVIDERS          <-  rowSums(temp)
+rm(temp)
+
 
 # sort out premium debit day column (take away th and rd....)
 All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("last day", 31, All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
@@ -315,4 +318,4 @@ All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("st", "", All_lap_Data$PREMIUMP
 All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("nd", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
 All_lap_Data$PREMIUMPAYERDEBITORDERDAY  <-  gsub("th", "", All_lap_Data$PREMIUMPAYERDEBITORDERDAY)
 
-HEADERS <- c(HEADERS, setdiff(Names, colnames(All_lap_Data)))                  
+                
